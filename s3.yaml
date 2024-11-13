@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion:
+'2010-09-09'
+Description: AWS CloudFormation Template to create S3 Bucket
+
+Parameters:
+  BucketName:
+    Description: The name of the S3 bucket
+    Type:String
+
+  Versioning Enabled:
+    Description: Enable versioning for the S3 bucket
+    Type:String
+    Default: Yes
+    AllowedValues:
+      :Yes
+      :No
+    ConstraintDescription:Must be either 'Yes' or 'No'
+
+PublicAccessBlock:
+  Description:Block public access to the bucket
+  Type: String
+  Default: Yes
+  AllowedValues:
+      :Yes
+      :No
+  ConstraintDescription:Must be either 'Yes' or 'No'
+
+  Resources:
+    MyS3Bucket:
+      Type:AWS::S3::Bucket
+      Properties:
+        BucketName:BucketName
+        VersioningConfiguring:
+          Status: !If
+             :IsVersioningEnabled
+             :Enabled
+             :Suspended
+    AccessControl:Private
+
+    MyS3BucketPolicy:
+      Type:AWS::S3::BucketPolicy
+      Properties:
+        Bucket: MyS3Bucket
+        PolicyDocument:
+          Version:'2012-10-17'
+          Statement:
+            :Effect:Deny
+             Principal:"*"
+             Action:"s3:*"
+             Resource:
+             :!Sub"${MyS3bUCKET.Arn}/*"
+             :!Ref MyS3Bucket
+             Condition:
+               Bool:
+                 "aws:SecureTransport":"false"
+        PublicAccessBlockConfiguration:
+           Type:
+          AWS::S3::BucketPublicAccessBlock
+          Properties:
+            BucketName: !Ref MyS3Bucket
+            BlockPublicACLS:!If
+                :IsPublicAcessBlocked
+                :true
+                :false
+            IgnorePublicAcls:!If
+                :IsPublicAcessBlocked
+                :true
+                :false
+            BlockPublicPolicy:!If
+                :IsPublicAcessBlocked
+                :true
+                :false
+            RestrictPublicBuckets:!If
+                :IsPublicAcessBlocked
+                :true
+                :false
+            Conditions:
+               IsVersioningEnabled:!Equals[!RefVersioningEnabled,'Yes']
+               IsPublicAccessBlocked:!Equals[!RefPublicAccessBlock,'Yes']
+
+      Outputs:
+        BucketName:
+           Description: The name of the S3 bucket
+           Value:!Ref MyS3Bucket
+        BucketArn:
+           Description: The ARN of the S3 bucket
+           Value: !MyS3Bucket.Arn
+
